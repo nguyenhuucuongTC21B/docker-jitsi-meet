@@ -1,14 +1,12 @@
-# Sử dụng image chính thức mới nhất của Jitsi
-FROM jitsi/web:stable-8195
+# Sử dụng image Jitsi chính thức MỚI NHẤT
+FROM jitsi/web:latest
 
-# Mở cổng 80
-EXPOSE 80
-
-# Tối ưu cho Render Free
+# Cài đặt các phụ thuộc cần thiết
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     curl && \
     rm -rf /var/lib/apt/lists/*
 
-# Copy file cấu hình
+# Copy cấu hình
 COPY .env /defaults
+EXPOSE 80
