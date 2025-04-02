@@ -1,12 +1,14 @@
-# Lấy image chính thức từ Jitsi
-FROM jitsi/web:latest
+# Sử dụng image chính thức mới nhất của Jitsi
+FROM jitsi/web:stable-8195
 
-# Mở cổng 80 (Render chỉ hỗ trợ port 80/443)
+# Mở cổng 80
 EXPOSE 80
 
-# Tắt các service không cần thiết để tiết kiệm RAM
-RUN rm /etc/cont-init.d/10-config && \
-    echo "ENABLE_XMPP_WEBSOCKET=0" >> /defaults/web/config
+# Tối ưu cho Render Free
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    curl && \
+    rm -rf /var/lib/apt/lists/*
 
-# Copy file cấu hình từ local (nếu có)
+# Copy file cấu hình
 COPY .env /defaults
