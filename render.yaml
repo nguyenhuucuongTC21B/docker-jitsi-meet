@@ -1,9 +1,11 @@
 services:
   - type: web
-    name: jitsi-meet
+    name: docker-jitsi-meet  # Giữ nguyên tên này mọi lần deploy
     plan: free
-    dockerfile: Dockerfile
     env: docker
+    envVars:
+      - key: PUBLIC_URL
+        value: $RENDER_EXTERNAL_URL  # Render tự điền giá trị
 
     # Tối ưu build process với cơ chế fallback
     buildCommand: |
@@ -85,3 +87,4 @@ services:
         - name: "Cleanup"
           command: "docker system prune -f"
           timeout: 120
+
