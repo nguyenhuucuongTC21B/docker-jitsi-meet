@@ -3,7 +3,7 @@ FROM jitsi/web:stable-10133-1
 
 # Thiết lập biến môi trường tối ưu cho Render Free Tier
 ENV ENABLE_AUTH=0 \
-    PUBLIC_URL=https://your-render-url.onrender.com \
+    PUBLIC_URL=https://docker-jitsi-meet-2h2b.onrender.com \
     ENABLE_XMPP_WEBSOCKET=0 \
     JVB_MAX_MEMORY=450m \
     MAX_BITRATE=500000 \
@@ -19,17 +19,29 @@ RUN apt-get update && \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-# Copy config với cơ chế fallback thông minh
-COPY --chown=jitsi:jitsi \
-    .env /defaults/.env 2>/dev/null || echo "No .env file, using defaults"
+# Copy config với cơ chế fallback an toàn
+COPY --chown=jitsi:jitsi .env /defaults/.env
+RUN if [ ! -f "/defaults/.env" ]; then \
+      echo "No .env file, using defaults"; \
+      touch /defaults/.env; \
+    fi
 
-# Copy config.js nếu tồn tại (không bắt buộc)
-COPY --chown=jitsi:jitsi \
-    config.js /usr/share/jitsi-meet/ 2>/dev/null || echo "No config.js, using defaults"
+# Xử lý config.js an toàn
+RUN if [ -f "config.js" ]; then \
+      cp --chown=jitsi:jitsi config.js /usr/share/jitsi-meet/; \
+      echo "Custom config.js applied"; \
+    else \
+      echo "No config.js, using defaults"; \
+    fi
 
-# Copy custom_interface nếu tồn tại (không bắt buộc)
+# Xử lý custom_interface an toàn
 RUN mkdir -p /usr/share/jitsi-meet && \
-    ( [ -d "custom_interface" ] && cp -r custom_interface/* /usr/share/jitsi-meet/ || echo "No custom interface" )
+    if [ -d "custom_interface" ]; then \
+      cp -r --chown=jitsi:jitsi custom_interface/* /usr/share/jitsi-meet/; \
+      echo "Custom interface applied"; \
+    else \
+      echo "No custom interface"; \
+    fi
 
 # Thiết lập quyền và health check
 USER jitsi
