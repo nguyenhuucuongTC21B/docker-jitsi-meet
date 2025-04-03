@@ -1,12 +1,38 @@
 services:
   - type: web
     name: jitsi-meet
-    runtime: docker
     plan: free
+    dockerfile: Dockerfile
     env: docker
-    buildCommand: docker build --no-cache --pull .
-    startCommand: docker run -p 10000:80 -e ENABLE_XMPP_WEBSOCKET=0 jitsi-meet
-resources:
-  limits:
-    cpu: 0.1
-    memory: 512MB
+    
+    # Tối ưu build process
+    buildCommand: |
+      docker build --pull --no-cache \
+        --build-arg ENABLE_AUTH=0 \
+        --build-arg PUBLIC_URL=$RENDER_EXTERNAL_URL \
+        -t jitsi-meet .
+    
+    # Cấu hình tài nguyên (phải khớp với ENV trong Dockerfile)
+    resources:
+      limits:
+        cpu: 0.1
+        memory: 512MB
+    
+    # Health check và auto-recovery
+    healthCheckPath: /
+    healthCheckInterval: 30s
+    healthCheckTimeout: 3s
+    
+    # Network config
+    network:
+      tcp:
+        - port: 80
+          protocol: HTTP
+      udp:
+        - port: 10000
+          protocol: UDP  # Cho video/audio
+    
+    # Tối ưu deploy
+    autoDeploy: true
+    deployRetries: 2
+    deployTimeout: 600s
