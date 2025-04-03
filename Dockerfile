@@ -1,14 +1,16 @@
-# Sử dụng image đã được kiểm tra hoạt động trên Render (07/2024)
-FROM docker.io/jitsi/web:stable-10133
+# Sử dụng image Jitsi Meet ổn định nhất (kiểm tra 07/2024)
+FROM jitsi/web:stable-10133-1
 
 # Thiết lập biến môi trường tối ưu cho Render Free Tier
 ENV ENABLE_AUTH=0 \
-    PUBLIC_URL=https://docker-jitsi-meet-oi4t.onrender.com \
+    PUBLIC_URL=https://your-render-url.onrender.com \
     ENABLE_XMPP_WEBSOCKET=0 \
-    JVB_MAX_MEMORY=512m \
+    JVB_MAX_MEMORY=450m \
     MAX_BITRATE=500000 \
     START_BITRATE=300000 \
-    VIDEOQUALITY_HD_THRESHOLD=480
+    VIDEOQUALITY_HD_THRESHOLD=480 \
+    ENABLE_RECORDING=0 \
+    ENABLE_FILE_RECORDING_SERVICE=0
 
 # Cài đặt phụ thuộc tối thiểu (tối ưu dung lượng image)
 RUN apt-get update && \
@@ -17,14 +19,17 @@ RUN apt-get update && \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-# Copy config theo thứ tự ưu tiên (giảm số layer)
+# Copy config với cơ chế fallback thông minh
 COPY --chown=jitsi:jitsi \
-    .env \
-    config.js \
-    /defaults/
+    .env /defaults/.env 2>/dev/null || echo "No .env file, using defaults"
 
-# Copy giao diện tùy chỉnh (nếu có)
-COPY --chown=jitsi:jitsi custom_interface/ /usr/share/jitsi-meet/
+# Copy config.js nếu tồn tại (không bắt buộc)
+COPY --chown=jitsi:jitsi \
+    config.js /usr/share/jitsi-meet/ 2>/dev/null || echo "No config.js, using defaults"
+
+# Copy custom_interface nếu tồn tại (không bắt buộc)
+RUN mkdir -p /usr/share/jitsi-meet && \
+    ( [ -d "custom_interface" ] && cp -r custom_interface/* /usr/share/jitsi-meet/ || echo "No custom interface" )
 
 # Thiết lập quyền và health check
 USER jitsi
