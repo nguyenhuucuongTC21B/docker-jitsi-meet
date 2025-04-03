@@ -3,7 +3,7 @@ FROM docker.io/jitsi/web:stable-10133
 
 # Thiết lập biến môi trường tối ưu cho Render Free Tier
 ENV ENABLE_AUTH=0 \
-    PUBLIC_URL=https://your-render-url.onrender.com \
+    PUBLIC_URL=https://docker-jitsi-meet-oi4t.onrender.com \
     ENABLE_XMPP_WEBSOCKET=0 \
     JVB_MAX_MEMORY=512m \
     MAX_BITRATE=500000 \
