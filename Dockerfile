@@ -1,5 +1,5 @@
 # Sử dụng image đã được kiểm tra hoạt động trên Render (07/2024)
-FROM docker.io/jitsi/web:stable-8120
+FROM docker.io/jitsi/web:stable-10133
 
 # Thiết lập biến môi trường tối ưu cho Render Free Tier
 ENV ENABLE_AUTH=0 \
