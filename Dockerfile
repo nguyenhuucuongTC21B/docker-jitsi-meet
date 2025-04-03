@@ -1,8 +1,5 @@
-
-
-
 # Sử dụng image Jitsi Web chính thức MỚI NHẤT
-FROM docker.io/jitsi/web:stable-8433
+FROM docker.io/jitsi/web:stable-7879
 
 # Thiết lập môi trường
 ENV ENABLE_AUTH=0 \
