@@ -4,35 +4,84 @@ services:
     plan: free
     dockerfile: Dockerfile
     env: docker
-    
-    # Tối ưu build process
+
+    # Tối ưu build process với cơ chế fallback
     buildCommand: |
-      docker build --pull --no-cache \
-        --build-arg ENABLE_AUTH=0 \
-        --build-arg PUBLIC_URL=$RENDER_EXTERNAL_URL \
-        -t jitsi-meet .
-    
-    # Cấu hình tài nguyên (phải khớp với ENV trong Dockerfile)
+      if [ -d "custom_interface" ] || [ -f "config.js" ]; then
+        docker build --pull --no-cache \
+          --build-arg ENABLE_AUTH=0 \
+          --build-arg PUBLIC_URL=$RENDER_EXTERNAL_URL \
+          -t jitsi-meet .
+      else
+        docker build --pull --no-cache \
+          --build-arg SKIP_CUSTOM=1 \
+          -t jitsi-meet .
+      fi
+
+    # Cấu hình tài nguyên (tối ưu cho Free Tier)
     resources:
       limits:
         cpu: 0.1
         memory: 512MB
-    
-    # Health check và auto-recovery
+      requests:
+        cpu: 0.05
+        memory: 256MB
+
+    # Health check nâng cao
     healthCheckPath: /
-    healthCheckInterval: 30s
+    healthCheckInterval: 15s
     healthCheckTimeout: 3s
-    
-    # Network config
+    healthCheckStartPeriod: 30s
+
+    # Cấu hình mạng tối ưu cho WebRTC
     network:
       tcp:
         - port: 80
           protocol: HTTP
+        - port: 443
+          protocol: HTTP
       udp:
         - port: 10000
-          protocol: UDP  # Cho video/audio
-    
+          protocol: UDP
+        - port: 10001
+          protocol: UDP
+
+    # Auto-scaling cơ bản
+    autoscaling:
+      enabled: false  # Tắt vì Free Tier không hỗ trợ
+      minInstances: 1
+      maxInstances: 1
+
     # Tối ưu deploy
     autoDeploy: true
-    deployRetries: 2
-    deployTimeout: 600s
+    deployRetries: 3
+    deployTimeout: 900s  # Tăng cho Jitsi khởi động chậm
+    concurrency: 1
+
+    # Biến môi trường đặc biệt
+    envVars:
+      - key: JVB_STUN_SERVERS
+        value: "stun.l.google.com:19302,stun1.l.google.com:19302"
+      - key: ENABLE_STATS
+        value: "0"
+      - key: XMPP_DOMAIN
+        value: "meet.jitsi"
+
+    # Giám sát
+    observability:
+      metrics: true
+      logs: true
+      alerts:
+        - type: cpu
+          threshold: 90%
+          duration: 5m
+        - type: memory
+          threshold: 85%
+          duration: 5m
+
+    # Hook sau deploy
+    hooks:
+      postDeploy:
+        - name: "Cleanup"
+          command: "docker system prune -f"
+          timeout: 120
