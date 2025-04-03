@@ -13,3 +13,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Mở cổng và copy config
 EXPOSE 80
 COPY .env /defaults
+# Copy file cấu hình (nếu cần)
+COPY config.js /usr/share/jitsi-meet/
+# Copy thư mục custom (nếu có)
+COPY custom_interface /usr/share/jitsi-meet/
